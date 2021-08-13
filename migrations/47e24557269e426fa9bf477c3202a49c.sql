@@ -1,3 +1,7 @@
+CREATE TABLE migration_versions (
+	version uuid NOT NULL
+);
+
 CREATE TABLE user (
 	name character varying NULL,
 	score integer NOT NULL,
