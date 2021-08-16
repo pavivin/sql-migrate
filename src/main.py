@@ -21,13 +21,11 @@ def aggregate_db_info(db_info: Record) -> Dict[list, dict]:
         column_name = row['column_name']
         data_type = row['data_type']
         is_nullable = 'NULL' if row['is_nullable'] == 'YES' else 'NOT NULL'
-
-        record_json[table_name] = record_json.get(table_name, [])
-        record_json[table_name].append({
-            'column_name': column_name,
+        record_json[table_name] = record_json.get(table_name, {})
+        record_json[table_name][column_name] = {
             'data_type': data_type,
             'is_nullable': is_nullable
-        })
+        } 
 
     return record_json
 
@@ -41,10 +39,10 @@ def query_from_json(record: Dict[list, dict]) -> str:
         columns_query = ''
         column_len = len(column)
 
-        for i, row in enumerate(column):
-            column_name = row['column_name']
-            data_type = row['data_type']
-            is_nullable = row['is_nullable']
+        for i, _column in enumerate(column.items()):
+            column_name, column_value = _column
+            data_type = column_value['data_type']
+            is_nullable = column_value['is_nullable']
 
             columns_query = ''.join((columns_query, column_name))
             columns_query = ' '.join((columns_query, data_type, is_nullable))
@@ -115,17 +113,24 @@ async def main():
             # table_diff = dict(set(table_value) ^ set(cur_record[table_name]))
             # if table_name:
             #     diff[table_name] = table_diff
-            for column in table_value:
-                ...
-                # column_diff = dict(set(column) ^ set(cur_record[table_name][column]))
-                # if column_diff:
-                #     diff[table_name] = diff.get(table_name, [])
-                #     diff[table_name].append([column])
+            diff[table_name] = diff.get(table_name, {})
+            for column_name, column_value in table_value.items():
+                if cur_record[table_name].get(column_name):
+                    column_diff = dict(set(column_value) ^ set(cur_record[table_name][column_name]))
+                else:
+                    diff[table_name][column_name] = column_value
+                if column_diff:
+                    diff[table_name][column_name] = column_diff
+
+            if not diff[table_name]:
+                del diff[table_name]
         if diff:
-            create_record(version_id, cur_record)
-            query = query_from_json(cur_record)
+            create_record(version_id, diff)
+            query = query_from_json(diff)
             create_query(version_id, query)
             await delete_last_version()
+            await insert_version(version_id)
+            
 
 
 if __name__ == "__main__":

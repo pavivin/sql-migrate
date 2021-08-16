@@ -1,0 +1,8 @@
+{
+    "user": {
+        "donations_sum": {
+            "data_type": "integer",
+            "is_nullable": "NULL"
+        }
+    }
+}
