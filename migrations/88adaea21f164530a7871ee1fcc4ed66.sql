@@ -1,5 +1,5 @@
 CREATE TABLE migration_versions (
-	version uuid NOT NULL
+	version character varying NOT NULL
 );
 
 CREATE TABLE user (

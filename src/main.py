@@ -2,21 +2,15 @@ import os
 import uuid
 from typing import Dict
 
-from asyncpg import Record
 import ujson
+from asyncpg import Record
 
 from db import DB
-
-
-async def get_db_info() -> Record:
-    query = """SELECT cl.table_name, column_name, data_type, is_nullable
-               FROM information_schema.columns cl
-               JOIN information_schema.tables tb
-               ON cl.table_name = tb.table_name
-               WHERE tb.table_schema='public'
-               AND tb.table_type='BASE TABLE'
-        """
-    return await DB.conn.fetch(query)
+from queries import (
+    create_version_table, delete_last_version,
+    empty_table, get_db_info,
+    get_last_version, insert_version
+)
 
 
 def aggregate_db_info(db_info: Record) -> Dict[list, dict]:
@@ -75,23 +69,14 @@ async def migrate():
     ...
 
 
-async def create_version_table() -> None:
-    query = """CREATE TABLE IF NOT EXISTS migration_versions(
-        version uuid not null
-    )"""
-    await DB.conn.execute(query)
+def create_record(version_id: str, record: dict) -> None:
+    with open(f'records/{version_id}.json', 'w+') as record_file:
+        record_file.write(ujson.dumps(record))
 
 
-async def insert_version(version_id: str) -> None:
-    query = f"""INSERT INTO migration_versions values ('{version_id}')"""
-    await DB.conn.execute(query)
-
-
-async def empty_table() -> bool:
-    query = """SELECT not exists(
-        SELECT FROM migration_versions
-    )"""
-    return await DB.conn.fetchval(query)
+def create_query(version_id: str, query: str) -> None:
+    with open(f'migrations/{version_id}.sql', 'w+') as migration_file:
+        migration_file.write(query)
 
 
 async def main():
@@ -101,6 +86,8 @@ async def main():
 
     is_empty = await empty_table()
 
+    version_id = uuid.uuid4().hex
+
     if is_empty:
 
         db_info = await get_db_info()
@@ -108,18 +95,37 @@ async def main():
         query = query_from_json(record)
 
         os.makedirs('migrations', exist_ok=True)
-
-        version_id = uuid.uuid4().hex
-
-        with open(f'migrations/{version_id}.sql', 'w+') as migration_file:
-            migration_file.write(query)
+        create_query(version_id, query)
 
         os.makedirs('records', exist_ok=True)
-
-        with open(f'records/{version_id}.json', 'w+') as migration_file:
-            migration_file.write(ujson.dumps(record))
+        create_record(version_id, record)
 
         await insert_version(version_id)
+
+    else:
+
+        db_info = await get_db_info()
+        cur_record = aggregate_db_info(db_info)
+        last_version = await get_last_version()
+        with open(f'records/{last_version}.json', 'r') as record_file:
+            last_record = ujson.loads(record_file.read())
+
+        diff = {}
+        for table_name, table_value in last_record.items():
+            # table_diff = dict(set(table_value) ^ set(cur_record[table_name]))
+            # if table_name:
+            #     diff[table_name] = table_diff
+            for column in table_value:
+                ...
+                # column_diff = dict(set(column) ^ set(cur_record[table_name][column]))
+                # if column_diff:
+                #     diff[table_name] = diff.get(table_name, [])
+                #     diff[table_name].append([column])
+        if diff:
+            create_record(version_id, cur_record)
+            query = query_from_json(cur_record)
+            create_query(version_id, query)
+            await delete_last_version()
 
 
 if __name__ == "__main__":
