@@ -1,0 +1,61 @@
+{
+    "migration_versions": [
+        {
+            "column_name": "version",
+            "data_type": "character varying",
+            "is_nullable": "NOT NULL"
+        }
+    ],
+    "user": [
+        {
+            "column_name": "name",
+            "data_type": "character varying",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "score",
+            "data_type": "integer",
+            "is_nullable": "NOT NULL"
+        },
+        {
+            "column_name": "email",
+            "data_type": "character varying",
+            "is_nullable": "NOT NULL"
+        },
+        {
+            "column_name": "password",
+            "data_type": "character varying",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "email_confirm",
+            "data_type": "character varying",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "city",
+            "data_type": "character varying",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "phone_number",
+            "data_type": "character varying",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "donations_number",
+            "data_type": "integer",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "donations_sum",
+            "data_type": "integer",
+            "is_nullable": "NULL"
+        },
+        {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NOT NULL"
+        }
+    ]
+}
