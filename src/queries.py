@@ -26,8 +26,22 @@ async def empty_table() -> bool:
     return await DB.conn.fetchval(query)
 
 
+async def function_exists() -> bool:
+    query = """
+        SELECT exists(
+            SELECT * 
+            FROM pg_proc 
+            WHERE proname = 'generate_create_table_statement'
+        )
+    """
+    return await DB.conn.fetchval(query)
+
+#TODO: SELECT dependence on data types
+# where numeric -> numeric_version
 async def get_db_info() -> Record:
-    query = """SELECT cl.table_name, column_name, data_type, is_nullable
+    query = """SELECT cl.table_name, column_name, data_type, is_nullable,
+                      numeric_scale, numeric_precision, 
+	                  character_maximum_length, column_default
                FROM information_schema.columns cl
                JOIN information_schema.tables tb
                ON cl.table_name = tb.table_name

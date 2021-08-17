@@ -25,7 +25,7 @@ def aggregate_db_info(db_info: Record) -> Dict[list, dict]:
         record_json[table_name][column_name] = {
             'data_type': data_type,
             'is_nullable': is_nullable
-        } 
+        }
 
     return record_json
 
@@ -54,19 +54,6 @@ def query_from_json(record: Dict[list, dict]) -> str:
     return query
 
 
-async def get_db_conn(args):
-    options = {
-        'database': args.postgres_database,
-        'user': args.postgres_user,
-        'host': args.postgres_host,
-        'port': args.postgres_port
-    }
-
-
-async def migrate():
-    ...
-
-
 def create_record(version_id: str, record: dict) -> None:
     with open(f'records/{version_id}.json', 'w+') as record_file:
         record_file.write(ujson.dumps(record))
@@ -77,60 +64,68 @@ def create_query(version_id: str, query: str) -> None:
         migration_file.write(query)
 
 
+def get_diff(cur_record: dict, last_record: dict) -> dict:
+    diff = {}
+    for table_name, table_value in last_record.items():
+        diff[table_name] = diff.get(table_name, {})
+        for column_name, column_value in table_value.items():
+            if cur_record[table_name].get(column_name):
+                # TODO: get difference from alter table and drop table
+                column_diff = dict(set(column_value) ^ set(cur_record[table_name][column_name]))
+            else:
+                diff[table_name][column_name] = column_value
+            if column_diff:
+                diff[table_name][column_name] = column_diff
+
+        if not diff[table_name]:
+            del diff[table_name]
+    return diff
+
+
+async def first_migration(version_id: str):
+    await create_version_table()
+
+    db_info = await get_db_info()
+    record = aggregate_db_info(db_info)
+    query = query_from_json(record)
+
+    os.makedirs('.migrations', exist_ok=True)
+    create_query(version_id, query)
+
+    os.makedirs('.records', exist_ok=True)
+    create_record(version_id, record)
+
+    await insert_version(version_id)
+
+
+async def migrate(version_id: str):
+    db_info = await get_db_info()
+    cur_record = aggregate_db_info(db_info)
+    last_version = await get_last_version()
+    with open(f'records/{last_version}.json', 'r') as record_file:
+        last_record = ujson.loads(record_file.read())
+
+    diff = get_diff(cur_record, last_record)
+
+    if diff:
+        create_record(version_id, diff)
+        query = query_from_json(diff)
+        create_query(version_id, query)
+        await delete_last_version()
+        await insert_version(version_id)
+
+
 async def main():
     await DB.connect()
-
-    await create_version_table()
 
     is_empty = await empty_table()
 
     version_id = uuid.uuid4().hex
 
     if is_empty:
-
-        db_info = await get_db_info()
-        record = aggregate_db_info(db_info)
-        query = query_from_json(record)
-
-        os.makedirs('migrations', exist_ok=True)
-        create_query(version_id, query)
-
-        os.makedirs('records', exist_ok=True)
-        create_record(version_id, record)
-
-        await insert_version(version_id)
-
+        await first_migration(version_id)
     else:
-
-        db_info = await get_db_info()
-        cur_record = aggregate_db_info(db_info)
-        last_version = await get_last_version()
-        with open(f'records/{last_version}.json', 'r') as record_file:
-            last_record = ujson.loads(record_file.read())
-
-        diff = {}
-        for table_name, table_value in last_record.items():
-            # table_diff = dict(set(table_value) ^ set(cur_record[table_name]))
-            # if table_name:
-            #     diff[table_name] = table_diff
-            diff[table_name] = diff.get(table_name, {})
-            for column_name, column_value in table_value.items():
-                if cur_record[table_name].get(column_name):
-                    column_diff = dict(set(column_value) ^ set(cur_record[table_name][column_name]))
-                else:
-                    diff[table_name][column_name] = column_value
-                if column_diff:
-                    diff[table_name][column_name] = column_diff
-
-            if not diff[table_name]:
-                del diff[table_name]
-        if diff:
-            create_record(version_id, diff)
-            query = query_from_json(diff)
-            create_query(version_id, query)
-            await delete_last_version()
-            await insert_version(version_id)
-            
+        await migrate(version_id)
 
 
 if __name__ == "__main__":
