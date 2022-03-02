@@ -1,15 +1,14 @@
 import os
 import uuid
-from typing import Dict
-
-import ujson
-from asyncpg import Record
 
 from db import DB
 from queries import (
-    create_version_table, delete_last_version,
-    empty_table, get_db_info,
-    get_last_version, insert_version
+    create_version_table,
+    delete_last_version,
+    empty_table,
+    get_db_info,
+    get_last_version,
+    insert_version,
 )
 from query import MigrateQuery
 from record import JsonRecord
@@ -22,10 +21,10 @@ async def first_migration(version_id: str):
     json_record = JsonRecord.aggregate_db_info(db_info)
     query = MigrateQuery.query_from_json(json_record)
 
-    os.makedirs('migrations', exist_ok=True)
+    os.makedirs("migrations", exist_ok=True)
     MigrateQuery.create_query(version_id, query)
 
-    os.makedirs('records', exist_ok=True)
+    os.makedirs("records", exist_ok=True)
     JsonRecord.create_record(version_id, json_record)
 
     await insert_version(version_id)
@@ -62,4 +61,5 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.get_event_loop().run_until_complete(main())

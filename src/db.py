@@ -10,7 +10,7 @@ class DB:
     @classmethod
     def get_conn(cls) -> Optional[Connection]:
         if cls.conn is None:
-            print('Connection Error')
+            print("Connection Error")
         return cls.conn
 
     @classmethod

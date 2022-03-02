@@ -2,25 +2,26 @@ from typing import Dict
 import ujson
 from pydantic import BaseModel, validator
 
+
 class ValidatedRecord(BaseModel):
     table_name: str
     column_name: str
     data_type: str
 
-    @validator('data_type')
+    @validator("data_type")
     def set_data_type(data_type):
-        return 'NULL' if data_type == 'YES' else 'NOT NULL'
+        return "NULL" if data_type == "YES" else "NOT NULL"
+
 
 class JsonRecord:
-
     @staticmethod
     def create_record(version_id: str, record: dict) -> None:
-        with open(f'records/{version_id}.json', 'w+') as record_file:
+        with open(f"records/{version_id}.json", "w+") as record_file:
             record_file.write(ujson.dumps(record))
 
     @staticmethod
     def record_from_file(version_id):
-        with open(f'records/{version_id}.json', 'r') as record_file:
+        with open(f"records/{version_id}.json", "r") as record_file:
             return ujson.loads(record_file.read())
 
     @staticmethod
@@ -31,7 +32,9 @@ class JsonRecord:
             for column_name, column_value in table_value.items():
                 if cur_record[table_name].get(column_name):
                     # TODO: get difference from alter table and drop table
-                    column_diff = dict(set(column_value) ^ set(cur_record[table_name][column_name]))
+                    column_diff = dict(
+                        set(column_value) ^ set(cur_record[table_name][column_name])
+                    )
                 else:
                     diff[table_name][column_name] = column_value
                 if column_diff:
@@ -49,8 +52,8 @@ class JsonRecord:
             column = ValidatedRecord(**row)
             record_json[column.table_name] = record_json.get(column.table_name, {})
             record_json[column.table_name][column.column_name] = {
-                'data_type': column.data_type,
-                'is_nullable': column.is_nullable
+                "data_type": column.data_type,
+                "is_nullable": column.is_nullable,
             }
 
         return record_json
