@@ -13,9 +13,11 @@ The Python SQL Toolkit for automatic database migration in raw sql queries
 
 ## Linux / Mac ::
 
+```bash
 $ cd simple
 $ virtualenv env
 $ source env/bin/activate
+```
 
 
 ## Windows ::
