@@ -7,10 +7,11 @@ class ValidatedRecord(BaseModel):
     table_name: str
     column_name: str
     data_type: str
+    is_nullable: str
 
-    @validator("data_type")
-    def set_data_type(data_type):
-        return "NULL" if data_type == "YES" else "NOT NULL"
+    @validator("is_nullable")
+    def set_data_type(is_nullable):
+        return "NULL" if is_nullable == "YES" else "NOT NULL"
 
 
 class JsonRecord:

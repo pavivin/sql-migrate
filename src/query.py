@@ -18,7 +18,7 @@ class MigrateQuery:
                 is_nullable = column_value["is_nullable"]
 
                 columns_query = "".join((columns_query, column_name))
-                columns_query = " ".join((columns_query, data_type, is_nullable))
+                columns_query = " ".join((columns_query, data_type, str(is_nullable)))
                 if i != column_len - 1:
                     columns_query = "".join((columns_query, ",\n\t"))
 

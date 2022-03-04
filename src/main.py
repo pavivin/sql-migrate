@@ -49,17 +49,15 @@ async def migrate(version_id: str):
 async def main():
     await DB.connect()
 
-    is_empty = await empty_table()
-
+    is_exists = await empty_table()
     version_id = uuid.uuid4().hex
 
-    if is_empty:
-        await first_migration(version_id)
-    else:
+    if is_exists:
         await migrate(version_id)
+    else:
+        await first_migration(version_id)
 
 
 if __name__ == "__main__":
     import asyncio
-
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())
