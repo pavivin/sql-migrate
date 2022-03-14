@@ -13,11 +13,11 @@ class ValidatedRecord(BaseModel):
 
     @validator("column_default")
     def set_column_default(column_default):
-        return f'DEFAULT {column_default}' if column_default else ""
+        return f"DEFAULT {column_default}" if column_default else ""
 
     @validator("character_maximum_length")
     def set_char_len(char_len):
-        return f'({char_len})' if char_len else ""
+        return f"({char_len})" if char_len else ""
 
     @validator("is_nullable")
     def set_data_type(is_nullable):
@@ -66,7 +66,7 @@ class JsonRecord:
                 "data_type": column.data_type,
                 "is_nullable": column.is_nullable,
                 "char_len": column.character_maximum_length,
-                "column_default": column.column_default
+                "column_default": column.column_default,
             }
 
         return record_json
