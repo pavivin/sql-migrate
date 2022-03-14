@@ -1,5 +1,5 @@
 from typing import Dict, Optional
-import ujson
+import json
 from pydantic import BaseModel, validator
 
 
@@ -28,12 +28,12 @@ class JsonRecord:
     @staticmethod
     def create_record(version_id: str, record: dict) -> None:
         with open(f"records/{version_id}.json", "w+") as record_file:
-            record_file.write(ujson.dumps(record))
+            record_file.write(json.dumps(record))
 
     @staticmethod
     def record_from_file(version_id):
         with open(f"records/{version_id}.json", "r") as record_file:
-            return ujson.loads(record_file.read())
+            return json.loads(record_file.read())
 
     @staticmethod
     def get_record_diff(cur_record: dict, last_record: dict) -> dict:
