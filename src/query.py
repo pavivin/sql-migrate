@@ -1,6 +1,6 @@
 from typing import Dict, List, Mapping
 
-from queries import get_constraints
+from queries import get_contraints
 
 # TODO: rewrite
 
@@ -19,7 +19,7 @@ class MigrateQuery:
     async def query_from_json(record: Dict[list, dict]) -> str:
         query = ""
 
-        constraints = await get_constraints()
+        constraints = await get_contraints()
 
         for tablename, column in record.items():
 
