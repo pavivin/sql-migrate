@@ -1,3 +1,4 @@
+import asyncpg
 import os
 import uuid
 
@@ -5,21 +6,23 @@ from db import DB
 from queries import (
     create_version_table,
     delete_last_version,
-    empty_table,
+    get_version_table,
     get_db_info,
     get_last_version,
     insert_version,
+    update_version,
 )
 from query import MigrateQuery
 from record import JsonRecord
 
 
-async def first_migration(version_id: str):
+async def first_migration():
+    version_id = uuid.uuid4().hex
     await create_version_table()
 
     db_info = await get_db_info()
     json_record = JsonRecord.aggregate_db_info(db_info)
-    query = MigrateQuery.query_from_json(json_record)
+    query = await MigrateQuery.query_from_json(json_record)
 
     os.makedirs("migrations", exist_ok=True)
     MigrateQuery.create_query(version_id, query)
@@ -40,23 +43,24 @@ async def migrate(version_id: str):
 
     if diff:
         JsonRecord.create_record(version_id, diff)
-        query = MigrateQuery.query_from_json(diff)
+        query = await MigrateQuery.query_from_json(diff)
         MigrateQuery.create_query(version_id, query)
         await delete_last_version()
-        await insert_version(version_id)
+        await update_version(version_id)
 
 
 async def main():
     await DB.connect()
 
-    is_exists = await empty_table()
-    version_id = uuid.uuid4().hex
-
-    if is_exists:
-        await migrate(version_id)
-    else:
-        await first_migration(version_id)
-
+    try:
+        version_id = await get_version_table()
+        if version_id:
+            await migrate(version_id)
+        else:
+            await first_migration()
+    except asyncpg.exceptions.PostgresError:
+        await first_migration()
+    
 
 if __name__ == "__main__":
     import asyncio
