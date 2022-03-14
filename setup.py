@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="raw-sql-automigrate",
-    version="",
+    version="0.0.1",
     packages=find_packages("src"),
     package_dir={"": "src"},
     url="",
