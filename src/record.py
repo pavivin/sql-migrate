@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 import ujson
 from pydantic import BaseModel, validator
 
@@ -7,10 +7,21 @@ class ValidatedRecord(BaseModel):
     table_name: str
     column_name: str
     data_type: str
+    is_nullable: str
+    character_maximum_length: Optional[str]
+    column_default: Optional[str]
 
-    @validator("data_type")
-    def set_data_type(data_type):
-        return "NULL" if data_type == "YES" else "NOT NULL"
+    @validator("column_default")
+    def set_column_default(column_default):
+        return f'DEFAULT {column_default}' if column_default else ""
+
+    @validator("character_maximum_length")
+    def set_char_len(char_len):
+        return f'({char_len})' if char_len else ""
+
+    @validator("is_nullable")
+    def set_data_type(is_nullable):
+        return "NULL" if is_nullable == "YES" else "NOT NULL"
 
 
 class JsonRecord:
@@ -54,6 +65,8 @@ class JsonRecord:
             record_json[column.table_name][column.column_name] = {
                 "data_type": column.data_type,
                 "is_nullable": column.is_nullable,
+                "char_len": column.character_maximum_length,
+                "column_default": column.column_default
             }
 
         return record_json
