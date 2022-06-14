@@ -4,7 +4,7 @@ from typing import List, Mapping
 
 async def create_version_table() -> None:
     query = """
-        CREATE TABLE IF NOT EXISTS migration_versions(
+        CREATE TABLE IF NOT EXISTS migration_version(
             version varchar PRIMARY KEY
         )
     """
@@ -13,7 +13,7 @@ async def create_version_table() -> None:
 
 async def insert_version(version_id: str) -> None:
     query = f"""
-        INSERT INTO migration_versions (version)
+        INSERT INTO migration_version (version)
         VALUES ('{version_id}')
     """
     await DB.conn.execute(query)
@@ -21,7 +21,7 @@ async def insert_version(version_id: str) -> None:
 
 async def update_version(version_id: str) -> None:
     query = f"""
-        UPDATE migration_versions 
+        UPDATE migration_version 
             SET version = '{version_id}'
     """
     await DB.conn.execute(query)
@@ -30,7 +30,7 @@ async def update_version(version_id: str) -> None:
 async def delete_last_version() -> None:
     query = """
         DELETE 
-        FROM migration_versions
+        FROM migration_version
     """
     await DB.conn.execute(query)
 
@@ -38,7 +38,7 @@ async def delete_last_version() -> None:
 async def get_version_table() -> bool:
     query = """
         SELECT version
-        FROM migration_versions
+        FROM migration_version
     """
     return await DB.conn.fetchval(query)
 
@@ -78,6 +78,6 @@ async def get_contraints() -> List[Mapping]:
 async def get_last_version() -> str:
     query = """
         SELECT version
-        FROM migration_versions
+        FROM migration_version
     """
     return await DB.conn.fetchval(query)

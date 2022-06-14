@@ -36,7 +36,7 @@ class JsonRecord:
             return json.loads(record_file.read())
 
     @staticmethod
-    def get_record_diff(cur_record: dict, last_record: dict) -> dict:
+    def get_record_diff(cur_record: dict[str, dict], last_record: dict) -> dict:
         diff = {}
         for table_name, table_value in last_record.items():
             diff[table_name] = diff.get(table_name, {})
